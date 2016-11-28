@@ -33,7 +33,7 @@ namespace L_ShareAssistant
         private volatile bool isTcpListening = true;
         private bool isStarted = false;
 
-        private Dictionary<IPEndPoint, TcpClient> connectedClients;
+        private Dictionary<string, TcpClient> connectedClients;
 
 
         public MainWindow()
@@ -44,7 +44,7 @@ namespace L_ShareAssistant
 
         private void init()
         {
-            connectedClients = new Dictionary<IPEndPoint, TcpClient>();
+            connectedClients = new Dictionary<string, TcpClient>();
         }
 
         private void startButton_Click(object sender, RoutedEventArgs e)
@@ -101,7 +101,8 @@ namespace L_ShareAssistant
             while (isUdpReceiving)
             {
                 byte[] bytesReceived = client.Receive(ref remoteIpEndPoint);
-                if (remoteIpEndPoint.Address.ToString() == localIp)
+                string remoteIpStr = remoteIpEndPoint.Address.ToString();
+                if (remoteIpStr == localIp || connectedClients.ContainsKey(remoteIpStr))
                 {
                     continue;
                 }
@@ -124,7 +125,16 @@ namespace L_ShareAssistant
             while (isTcpListening)
             {
                 TcpClient client = listener.AcceptTcpClient();
-                connectedClients.Add(client.Client.RemoteEndPoint as IPEndPoint, client);
+                IPEndPoint remoteIpEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
+                try
+                {
+                    connectedClients.Add(remoteIpEndPoint.Address.ToString(), client);
+                }
+                catch (Exception)
+                {
+                    client.Close();
+                    continue;
+                }
                 showDebugInfo(string.Format("{0} is connected", client.Client.RemoteEndPoint));
                 Thread readThread = new Thread(readFromClient);
                 readThread.Start(client);
@@ -150,7 +160,8 @@ namespace L_ShareAssistant
             catch (Exception)
             {
                 showDebugInfo(string.Format("Client [{0}] is disconnected", client.Client.RemoteEndPoint.ToString()));
-                connectedClients.Remove(client.Client.RemoteEndPoint as IPEndPoint);
+                IPEndPoint remoteIpEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
+                connectedClients.Remove(remoteIpEndPoint.Address.ToString());
                 client.Close();
                 return false;
             }
@@ -177,7 +188,8 @@ namespace L_ShareAssistant
                 catch (Exception)
                 {
                     showDebugInfo(string.Format("Client [{0}] is disconnected", client.Client.RemoteEndPoint.ToString()));
-                    connectedClients.Remove(client.Client.RemoteEndPoint as IPEndPoint);
+                    IPEndPoint remoteIpEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
+                    connectedClients.Remove(remoteIpEndPoint.Address.ToString());
                     client.Close();
                     return;
                 }
@@ -193,7 +205,17 @@ namespace L_ShareAssistant
             string remoteIp = remoteIpObj as string;
             TcpClient client = new TcpClient();
             client.Connect(IPAddress.Parse(remoteIp), tcpPort);
-            connectedClients.Add(client.Client.RemoteEndPoint as IPEndPoint, client);
+            IPEndPoint remoteIpEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
+            try
+            {
+                connectedClients.Add(remoteIpEndPoint.Address.ToString(), client);
+            }
+            catch (Exception)
+            {
+                client.Close();
+                return;
+            }
+
             NetworkStream stream = client.GetStream();
             string message = "Hello world";
             byte[] buffer = Encoding.UTF8.GetBytes(message);
