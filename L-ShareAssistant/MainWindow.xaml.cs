@@ -15,23 +15,32 @@ using System.Windows.Shapes;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Windows.Interop;
 
 namespace L_ShareAssistant
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
+
+    //TODO Cloud Clipboard
     public partial class MainWindow : Window
     {
 
-        private string multicastGroupIpStr = "234.5.6.7";
-        private string localIp;
-        private int remoteUdpPort = 7269;
-        private int tcpPort = 7270;
-        private volatile bool isUdpSending = true;
-        private volatile bool isUdpReceiving = true;
-        private volatile bool isTcpListening = true;
-        private bool isStarted = false;
+        private string _multicastGroupIpStr = "234.5.6.7";
+        private string _localIp;
+        private int _remoteUdpPort = 7269;
+        private int _tcpPort = 7270;
+        private volatile bool _isUdpSending = true;
+        private volatile bool _isUdpReceiving = true;
+        private volatile bool _isTcpListening = true;
+        private bool _isStarted = false;
+        private const int MAX_UDP_SEND = 10;
+        private IntPtr _windowHandle;
+        private const int COPY_KEYCODE = 100;
+        private delegate void _messageReceive(string message);
+        private event _messageReceive _onMessageReceived;
+
 
         private Dictionary<string, TcpClient> connectedClients;
 
@@ -39,29 +48,74 @@ namespace L_ShareAssistant
         public MainWindow()
         {
             InitializeComponent();
-            init();
         }
 
-        private void init()
+        private void Window_SourceInitialized(object sender, EventArgs e)
+        {
+            _init();
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            HotKey.UnregisterHotKey(_windowHandle, 100);
+            _isUdpSending = false;
+            _isUdpReceiving = false;
+            _isTcpListening = false;
+            Environment.Exit(0);
+        }
+
+        private void _init()
         {
             connectedClients = new Dictionary<string, TcpClient>();
+            _windowHandle = new WindowInteropHelper(this).Handle;
+            HwndSource source = HwndSource.FromHwnd(_windowHandle);
+            if (source != null)
+            {
+                source.AddHook(WndProc);
+            }
+            HotKey.RegisterHotKey(_windowHandle, 100, HotKey.KeyModifiers.WindowsKey, System.Windows.Forms.Keys.C);
+            _onMessageReceived += MainWindow_onMessageReceived;
         }
 
-        private void startButton_Click(object sender, RoutedEventArgs e)
+        private void MainWindow_onMessageReceived(string message)
         {
-            isStarted = true;
-            Thread udpReceiveThread = new Thread(udpReceive);
-            Thread udpSendThread = new Thread(udpSend);
-            Thread tcpReceiveThread = new Thread(tcpReceive);
+            _showDebugInfo(message);
+            if(message == "")
+            {
+                return;
+            }
+            try
+            {
+                Dispatcher.Invoke(() => {
+                    // https://msdn.microsoft.com/zh-cn/library/aa686001.aspx
+                    Clipboard.SetText(message);
 
-            localIp = localIpTextBox.Text;
+                });
+
+
+            }
+            catch (Exception ex)
+            {
+
+                _showDebugInfo(ex.Message);
+            }
+        }
+
+        private void _startButton_Click(object sender, RoutedEventArgs e)
+        {
+            _isStarted = true;
+            Thread udpReceiveThread = new Thread(_udpReceive);
+            Thread udpSendThread = new Thread(_udpSend);
+            Thread tcpReceiveThread = new Thread(_tcpReceive);
+
+            _localIp = localIpTextBox.Text;
 
             udpReceiveThread.Start();
             tcpReceiveThread.Start();
             udpSendThread.Start("hello world");
         }
 
-        private void showDebugInfo(string message)
+        private void _showDebugInfo(string message)
         {
             Dispatcher.Invoke(() =>
             {
@@ -69,60 +123,60 @@ namespace L_ShareAssistant
             });
         }
 
-        private void udpSend(object messageObj)
+        private void _udpSend(object messageObj)
         {
-            showDebugInfo(string.Format("[Debug] Current method: {0}", System.Reflection.MethodBase.GetCurrentMethod().Name));
+            _showDebugInfo(string.Format("[Debug] Current method: {0}", System.Reflection.MethodBase.GetCurrentMethod().Name));
             UdpClient client = new UdpClient(0);
             string message = messageObj as string;
             int i = 0;
-            client.JoinMulticastGroup(IPAddress.Parse(multicastGroupIpStr), IPAddress.Parse(localIp));
+            client.JoinMulticastGroup(IPAddress.Parse(_multicastGroupIpStr), IPAddress.Parse(_localIp));
             byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-            while (isUdpSending)
+            while (_isUdpSending)
             {
                 i++;
-                if (i >= 10)
+                if (i >= MAX_UDP_SEND)
                 {
-                    isUdpSending = false;
+                    _isUdpSending = false;
                 }
-                client.Send(messageBytes, messageBytes.Length, multicastGroupIpStr, remoteUdpPort);
-                showDebugInfo(string.Format("Send {0}", message));
+                client.Send(messageBytes, messageBytes.Length, _multicastGroupIpStr, _remoteUdpPort);
+                _showDebugInfo(string.Format("Send {0}", message));
                 Thread.Sleep(1000);
             }
-            showDebugInfo("UDP send stopped");
+            _showDebugInfo("UDP send stopped");
         }
 
-        private void udpReceive()
+        private void _udpReceive()
         {
-            showDebugInfo(string.Format("[Debug] Current method: {0}", System.Reflection.MethodBase.GetCurrentMethod().Name));
+            _showDebugInfo(string.Format("[Debug] Current method: {0}", System.Reflection.MethodBase.GetCurrentMethod().Name));
 
-            UdpClient client = new UdpClient(remoteUdpPort);
-            client.JoinMulticastGroup(IPAddress.Parse(multicastGroupIpStr), IPAddress.Parse(localIp));
+            UdpClient client = new UdpClient(_remoteUdpPort);
+            client.JoinMulticastGroup(IPAddress.Parse(_multicastGroupIpStr), IPAddress.Parse(_localIp));
             IPEndPoint remoteIpEndPoint = null;
-            while (isUdpReceiving)
+            while (_isUdpReceiving)
             {
                 byte[] bytesReceived = client.Receive(ref remoteIpEndPoint);
                 string remoteIpStr = remoteIpEndPoint.Address.ToString();
-                if (remoteIpStr == localIp || connectedClients.ContainsKey(remoteIpStr))
+                if (remoteIpStr == _localIp || connectedClients.ContainsKey(remoteIpStr))
                 {
                     continue;
                 }
                 string message = Encoding.UTF8.GetString(bytesReceived);
-                showDebugInfo(string.Format("Receive [{0} {1}] {2}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), remoteIpEndPoint.ToString(), message));
-                Thread tcpConnectThread = new Thread(tcpConnect);
+                _showDebugInfo(string.Format("Receive [{0} {1}] {2}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), remoteIpEndPoint.ToString(), message));
+                Thread tcpConnectThread = new Thread(_tcpConnect);
                 tcpConnectThread.Start(remoteIpEndPoint.Address.ToString());
             }
-            showDebugInfo("UDP receive stopped");
+            _showDebugInfo("UDP receive stopped");
         }
 
-        private void tcpReceive()
+        private void _tcpReceive()
         {
-            showDebugInfo(string.Format("[Debug] Current method: {0}", System.Reflection.MethodBase.GetCurrentMethod().Name));
+            _showDebugInfo(string.Format("[Debug] Current method: {0}", System.Reflection.MethodBase.GetCurrentMethod().Name));
 
-            TcpListener listener = new TcpListener(IPAddress.Parse(localIp), tcpPort);
+            TcpListener listener = new TcpListener(IPAddress.Parse(_localIp), _tcpPort);
             listener.Start();
 
 
-            while (isTcpListening)
+            while (_isTcpListening)
             {
                 TcpClient client = listener.AcceptTcpClient();
                 IPEndPoint remoteIpEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
@@ -135,20 +189,20 @@ namespace L_ShareAssistant
                     client.Close();
                     continue;
                 }
-                showDebugInfo(string.Format("{0} is connected", client.Client.RemoteEndPoint));
-                Thread readThread = new Thread(readFromClient);
+                _showDebugInfo(string.Format("{0} is connected", client.Client.RemoteEndPoint));
+                Thread readThread = new Thread(_readFromClient);
                 readThread.Start(client);
-                isUdpSending = false;
+                _isUdpSending = false;
 
-                sendMessageToClient(client, "lalala");
+                _sendMessageToClient(client, "lalala");
 
 
             }
-            showDebugInfo("TCP receive stopped");
+            _showDebugInfo("TCP receive stopped");
 
         }
 
-        private bool sendMessageToClient(TcpClient client, string message)
+        private bool _sendMessageToClient(TcpClient client, string message)
         {
             byte[] buffer = Encoding.UTF8.GetBytes(message);
             try
@@ -159,7 +213,7 @@ namespace L_ShareAssistant
             }
             catch (Exception)
             {
-                showDebugInfo(string.Format("Client [{0}] is disconnected", client.Client.RemoteEndPoint.ToString()));
+                _showDebugInfo(string.Format("Client [{0}] is disconnected", client.Client.RemoteEndPoint.ToString()));
                 IPEndPoint remoteIpEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
                 connectedClients.Remove(remoteIpEndPoint.Address.ToString());
                 client.Close();
@@ -167,9 +221,9 @@ namespace L_ShareAssistant
             }
         }
 
-        private void readFromClient(object clientObj)
+        private void _readFromClient(object clientObj)
         {
-            showDebugInfo(string.Format("[Debug] Current method: {0}", System.Reflection.MethodBase.GetCurrentMethod().Name));
+            _showDebugInfo(string.Format("[Debug] Current method: {0}", System.Reflection.MethodBase.GetCurrentMethod().Name));
 
             TcpClient client = clientObj as TcpClient;
             NetworkStream stream = client.GetStream();
@@ -182,12 +236,12 @@ namespace L_ShareAssistant
                     while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) != 0)
                     {
                         string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                        showDebugInfo(message);
+                        _onMessageReceived(message);
                     }
                 }
                 catch (Exception)
                 {
-                    showDebugInfo(string.Format("Client [{0}] is disconnected", client.Client.RemoteEndPoint.ToString()));
+                    _showDebugInfo(string.Format("Client [{0}] is disconnected", client.Client.RemoteEndPoint.ToString()));
                     IPEndPoint remoteIpEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
                     connectedClients.Remove(remoteIpEndPoint.Address.ToString());
                     client.Close();
@@ -198,13 +252,13 @@ namespace L_ShareAssistant
 
         }
 
-        private void tcpConnect(object remoteIpObj)
+        private void _tcpConnect(object remoteIpObj)
         {
-            showDebugInfo(string.Format("[Debug] Current method: {0}", System.Reflection.MethodBase.GetCurrentMethod().Name));
+            _showDebugInfo(string.Format("[Debug] Current method: {0}", System.Reflection.MethodBase.GetCurrentMethod().Name));
 
             string remoteIp = remoteIpObj as string;
             TcpClient client = new TcpClient();
-            client.Connect(IPAddress.Parse(remoteIp), tcpPort);
+            client.Connect(IPAddress.Parse(remoteIp), _tcpPort);
             IPEndPoint remoteIpEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
             try
             {
@@ -220,23 +274,58 @@ namespace L_ShareAssistant
             string message = "Hello world";
             byte[] buffer = Encoding.UTF8.GetBytes(message);
             stream.Write(buffer, 0, buffer.Length);
-            readFromClient(client);
+            _readFromClient(client);
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            isUdpSending = false;
-            isUdpReceiving = false;
-            isTcpListening = false;
-            Environment.Exit(0);
-        }
 
-        private void sendMessageButton_Click(object sender, RoutedEventArgs e)
+        private void _sendMessageButton_Click(object sender, RoutedEventArgs e)
         {
             foreach (var client in connectedClients.Values)
             {
-                sendMessageToClient(client, messageTextBox.Text);
+                _sendMessageToClient(client, messageTextBox.Text);
             }
+        }
+
+
+        protected virtual IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+
+            const int WM_HOTKEY = 0x0312;
+
+            //按快捷键 
+            switch (msg)
+            {
+                case WM_HOTKEY:
+                    switch (wParam.ToInt32())
+                    {
+                        case COPY_KEYCODE:
+                            this._copyToRemoteClients();
+                            break;
+                    }
+                    break;
+            }
+            return IntPtr.Zero;
+        }
+
+        private void _copyToRemoteClients()
+        {
+            Clipboard.Clear();
+            System.Windows.Forms.SendKeys.SendWait("^c");
+
+            IDataObject data = Clipboard.GetDataObject();
+            if(data.GetDataPresent(DataFormats.Text))
+            {
+                string message = data.GetData(DataFormats.Text) as string;
+                if (message == "")
+                {
+                    return;
+                }
+                foreach (var client in connectedClients.Values)
+                {
+                    _sendMessageToClient(client, message);
+                }
+            }
+
         }
     }
 }
