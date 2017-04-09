@@ -6,13 +6,14 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace ConsoleTest
 {
     class Program
     {
         static string multicastGroupIpStr = "234.5.6.7";
-        static string localIp = "192.168.1.108";
+        static string localIp = "192.168.1.109";
         static int remoteUdpPort = 7269;
         static int tcpPort = 7270;
         static volatile bool isUdpSending = true;
@@ -20,16 +21,76 @@ namespace ConsoleTest
         static volatile bool isTcpListening = true;
         static void Main(string[] args)
         {
-            Thread udpReceiveThread = new Thread(udpReceive);
-            Thread udpSendThread = new Thread(udpSend);
-            Thread tcpReceiveThread = new Thread(tcpReceive);
+            int sendPort = 7269;
+            int receivePort = 7270;
+            string type = Console.ReadLine();
+            if (type == "1")
+            {
+                receiveProcess(receivePort);
+            }
+            else
+            {
+                sendProcess(sendPort, receivePort);
+            }
+            Console.Read();
+        }
 
-            localIp = Console.ReadLine();
+        private static void sendProcess(int sendPort, int receivePort)
+        {
+            string sendPath = @"D:\Download\nginx 1.11.11.1 Lion.zip";
+            TcpClient client = new TcpClient();
+            try
+            {
+                client.Connect(localIp, receivePort);
+                Console.WriteLine("[{0}][{1}:{2}] connected.", DateTime.Now.ToLongTimeString(), localIp, receivePort);
+                byte[] buffer = new byte[1024];
+                NetworkStream stream = client.GetStream();
+                using (FileStream fs = new FileStream(sendPath, FileMode.Open))
+                {
+                    int bytesSend = 0;
+                    int bytesRead = 0;
+                    while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        stream.Write(buffer, 0, bytesRead);
+                        bytesSend += bytesRead;
+                        Console.WriteLine("[{0}][{1}] bytes sent.", DateTime.Now.ToLongTimeString(), bytesSend);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
 
-            udpReceiveThread.Start();
-            tcpReceiveThread.Start();
-            udpSendThread.Start("hello world");
+        private static void receiveProcess(int receivePort)
+        {
+            string savePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss-fff"));
+            TcpListener listener = new TcpListener(IPAddress.Parse(localIp), receivePort);
+            listener.Start();
+            TcpClient client = listener.AcceptTcpClient();
+            Console.WriteLine("[{0}][{1}] connected.", DateTime.Now.ToLongTimeString(), client.Client.RemoteEndPoint);
+            byte[] buffer = new byte[1024];
+            using (FileStream fs = new FileStream(savePath, FileMode.Create))
+            {
+                NetworkStream stream = client.GetStream();
+                int bytesReceived = 0;
+                int bytesRead = 0;
+                try
+                {
+                    while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        fs.Write(buffer, 0, bytesRead);
+                        bytesReceived += bytesRead;
+                        Console.WriteLine("[{0}][{1}] bytes received.", DateTime.Now.ToLongTimeString(), bytesReceived);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("[{0}][{1}] disconnected.", DateTime.Now.ToLongTimeString(), client.Client.RemoteEndPoint);
+                }
 
+            }
         }
 
         static void udpSend(object messageObj)
@@ -40,10 +101,10 @@ namespace ConsoleTest
             int i = 0;
             client.JoinMulticastGroup(IPAddress.Parse(multicastGroupIpStr), IPAddress.Parse(localIp));
             byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-            while(isUdpSending)
+            while (isUdpSending)
             {
                 i++;
-                if(i >= 10)
+                if (i >= 10)
                 {
                     isUdpSending = false;
                 }
@@ -61,10 +122,10 @@ namespace ConsoleTest
             UdpClient client = new UdpClient(remoteUdpPort);
             client.JoinMulticastGroup(IPAddress.Parse(multicastGroupIpStr), IPAddress.Parse(localIp));
             IPEndPoint remoteIpEndPoint = null;
-            while(isUdpReceiving)
+            while (isUdpReceiving)
             {
                 byte[] bytesReceived = client.Receive(ref remoteIpEndPoint);
-                if(remoteIpEndPoint.Address.ToString() == localIp)
+                if (remoteIpEndPoint.Address.ToString() == localIp)
                 {
                     continue;
                 }
@@ -84,7 +145,7 @@ namespace ConsoleTest
             listener.Start();
 
 
-            while(isTcpListening)
+            while (isTcpListening)
             {
                 TcpClient client = listener.AcceptTcpClient();
                 Console.WriteLine("{0} is connected", client.Client.RemoteEndPoint);
@@ -94,7 +155,7 @@ namespace ConsoleTest
                 Thread readNetworkStreamThread = new Thread(readFromNetworkStream);
                 readNetworkStreamThread.Start(stream);
                 isUdpSending = false;
-                
+
                 while (true)
                 {
                     string responseStr = "la la la";
@@ -126,7 +187,7 @@ namespace ConsoleTest
             }
             catch (Exception)
             {
-                
+
                 Console.WriteLine("Client is disconnected");
                 return;
             }

@@ -1,13 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26403.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "L-ShareAssistant", "L-ShareAssistant\L-ShareAssistant.csproj", "{2B4B3C46-EE62-478E-AB0B-CC1C337CB054}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleTest", "ConsoleTest\ConsoleTest.csproj", "{4830C790-5E8A-4622-B042-F9F50A393E71}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClipBoardDemo", "ClipBoardDemo\ClipBoardDemo.csproj", "{291E8FC8-0060-4A38-9396-D49D551F172B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTestProject1", "UnitTestProject1\UnitTestProject1.csproj", "{6EF6698C-6BD3-4E05-986B-BC9D50E66E5D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StateMachineDemo", "StateMachineDemo\StateMachineDemo.csproj", "{9D665F22-5AF3-48B2-B782-201F8AA00166}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "L-ShareAssistant", "L-ShareAssistant\L-ShareAssistant.csproj", "{8E6DE3D9-DC5F-4140-BF83-F53FBF28F92C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,10 +19,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2B4B3C46-EE62-478E-AB0B-CC1C337CB054}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2B4B3C46-EE62-478E-AB0B-CC1C337CB054}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2B4B3C46-EE62-478E-AB0B-CC1C337CB054}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2B4B3C46-EE62-478E-AB0B-CC1C337CB054}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4830C790-5E8A-4622-B042-F9F50A393E71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4830C790-5E8A-4622-B042-F9F50A393E71}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4830C790-5E8A-4622-B042-F9F50A393E71}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -27,6 +27,18 @@ Global
 		{291E8FC8-0060-4A38-9396-D49D551F172B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{291E8FC8-0060-4A38-9396-D49D551F172B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{291E8FC8-0060-4A38-9396-D49D551F172B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6EF6698C-6BD3-4E05-986B-BC9D50E66E5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6EF6698C-6BD3-4E05-986B-BC9D50E66E5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6EF6698C-6BD3-4E05-986B-BC9D50E66E5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6EF6698C-6BD3-4E05-986B-BC9D50E66E5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9D665F22-5AF3-48B2-B782-201F8AA00166}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D665F22-5AF3-48B2-B782-201F8AA00166}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D665F22-5AF3-48B2-B782-201F8AA00166}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D665F22-5AF3-48B2-B782-201F8AA00166}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E6DE3D9-DC5F-4140-BF83-F53FBF28F92C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E6DE3D9-DC5F-4140-BF83-F53FBF28F92C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E6DE3D9-DC5F-4140-BF83-F53FBF28F92C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E6DE3D9-DC5F-4140-BF83-F53FBF28F92C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

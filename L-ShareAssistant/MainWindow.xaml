@@ -3,15 +3,33 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:L_ShareAssistant"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525" Closed="Window_Closed" SourceInitialized="Window_SourceInitialized">
-    <Grid>
-        <TextBox x:Name="localIpTextBox" HorizontalAlignment="Left" Height="23" Margin="24,58,0,0" TextWrapping="Wrap" Text="192.168.1.108" VerticalAlignment="Top" Width="120"/>
-        <TextBox x:Name="debugTextBox" HorizontalAlignment="Left" Height="208" Margin="261,58,0,0" Text="" VerticalAlignment="Top" Width="231" TextWrapping="Wrap" AcceptsReturn="True" AcceptsTab="True" VerticalScrollBarVisibility="Auto"/>
-        <Button x:Name="startButton" Content="Start" HorizontalAlignment="Left" Margin="163,62,0,0" VerticalAlignment="Top" Width="75" Click="_startButton_Click"/>
-        <TextBox x:Name="messageTextBox" HorizontalAlignment="Left" Height="23" Margin="24,163,0,0" TextWrapping="Wrap" Text="Hello, world!" VerticalAlignment="Top" Width="120"/>
-        <Button x:Name="sendMessageButton" Content="Send" HorizontalAlignment="Left" Margin="163,167,0,0" VerticalAlignment="Top" Width="75" Click="_sendMessageButton_Click"/>
+        xmlns:ignore="http://www.galasoft.ch/ignore"
+        mc:Ignorable="d ignore"
+        Height="300"
+        Width="300"
+        Title="MVVM Light Application"
+        DataContext="{Binding Main, Source={StaticResource Locator}}">
+    
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Skins/MainSkin.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
 
+    <Grid x:Name="LayoutRoot">
+
+        <TextBlock FontSize="36"
+                   FontWeight="Bold"
+                   Foreground="Purple"
+                   Text="{Binding WelcomeTitle}"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Center"
+                   TextWrapping="Wrap" />
+        <Button Command="{Binding TestCommand}" 
+                Content="Test"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Center"></Button>
     </Grid>
 </Window>

@@ -1,0 +1,20 @@
+﻿<Window x:Class="L_ShareAssistant.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:L_ShareAssistant"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="350" Width="525" Closed="_windowClosed" SourceInitialized="_windowSourceInitialized">
+    <Grid>
+        <TextBox x:Name="localIpTextBox" HorizontalAlignment="Left" Height="23" Margin="24,58,0,0" TextWrapping="Wrap" Text="192.168.1.108" VerticalAlignment="Top" Width="120"/>
+        <TextBox x:Name="debugTextBox" HorizontalAlignment="Left" Height="208" Margin="261,58,0,0" Text="" VerticalAlignment="Top" Width="231" TextWrapping="Wrap" AcceptsReturn="True" AcceptsTab="True" VerticalScrollBarVisibility="Auto"/>
+        <Button x:Name="startButton" Content="Start" HorizontalAlignment="Left" Margin="163,60,0,0" VerticalAlignment="Top" Width="75" Click="_startButtonClick"/>
+        <TextBox x:Name="messageTextBox" HorizontalAlignment="Left" Height="23" Margin="24,97,0,0" TextWrapping="Wrap" Text="Hello, world!" VerticalAlignment="Top" Width="120"/>
+        <Button x:Name="sendMessageButton" Content="Send" HorizontalAlignment="Left" Margin="163,99,0,0" VerticalAlignment="Top" Width="75" Click="_sendMessageButtonClick"/>
+        <TextBox x:Name="filePathTextBox" HorizontalAlignment="Left" Height="23" Margin="24,138,0,0" Text="" VerticalAlignment="Top" Width="214"/>
+        <Button x:Name="chooseFileButton" Content="File ..." HorizontalAlignment="Left" Margin="80,166,0,0" VerticalAlignment="Top" Width="75" Click="chooseFileButtonClick"/>
+        <Button x:Name="sendFileButton" Content="Send" HorizontalAlignment="Left" Margin="163,166,0,0" VerticalAlignment="Top" Width="75" Click="sendFileButtonClick"/>
+
+    </Grid>
+</Window>
